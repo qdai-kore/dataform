@@ -3,6 +3,9 @@
   "assertionSchema": "dataform_assertions",
   "warehouse": "bigquery",
   "defaultDatabase": "machine-learning-poc-385716",
-  "defaultLocation": "US"
+  "defaultLocation": "US",
+  "vars":{
+    "op_subscription_details_prev_day": "1"
+  }
 }
     
