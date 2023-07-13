@@ -1,5 +1,5 @@
 config{
-    type:"operation"
+    type:"operations"
 }
 
 js {
