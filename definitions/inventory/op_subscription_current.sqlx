@@ -2,19 +2,11 @@ config{
     type:"operations"
 }
 
-js {
-  const last_n_days = dataform.projectConfig.vars.op_subscription_details_prev_day;
-}
-
-select ${last_n_days} as last_n_days;
-
----
-
 merge `inventory.sub_details` sub
 using(
   select array_agg(t order by etl_update desc limit 1)[offset(0)].*
     from etl_cpro.etl_inv_subscription t
-    where etl_update >= TIMESTAMP_TRUNC(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL ${last_n_days} DAY), DAY)  
+    where etl_update >= TIMESTAMP_TRUNC(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY), DAY)  
     group by t.subscription_urn
 ) etl on etl.subscription_urn = sub.subscription_urn
 when matched then update set 
