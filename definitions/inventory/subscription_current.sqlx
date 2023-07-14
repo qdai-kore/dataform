@@ -1,0 +1,17 @@
+config {
+    type: "incremental",
+    uniqueKey: ["subscription_urn"],
+    schema: 'inventory'
+}
+
+js {
+  const last_n_days = dataform.projectConfig.vars.op_subscription_details_prev_day;
+  // Get start of previous day
+  const prevDay = constants.getStartOfPreviousDay(last_n_days);
+
+}
+
+select array_agg(t order by etl_update desc limit 1)[offset(0)].*
+from etl_cpro.etl_inv_subscription t
+${ when(incremental(), `WHERE etl_update >= '${prevDay}'`) }
+group by t.subscription_urn
