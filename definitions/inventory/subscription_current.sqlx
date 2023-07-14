@@ -13,5 +13,5 @@ js {
 
 select array_agg(t order by etl_update desc limit 1)[offset(0)].*
 from etl_cpro.etl_inv_subscription t
-${ when(incremental(), `WHERE etl_update >= '${prevDay}'`) }
+${ when(incremental(), `WHERE etl_update >= '${prevDay}'`, `WHERE etl_update>='2023-06-01'`) }
 group by t.subscription_urn
