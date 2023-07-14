@@ -5,7 +5,7 @@
   "defaultDatabase": "machine-learning-poc-385716",
   "defaultLocation": "US",
   "vars":{
-    "op_subscription_details_prev_day": "1"
+    "incremental_days": "1"
   }
 }
     
