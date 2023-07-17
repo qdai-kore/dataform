@@ -1,7 +1,11 @@
 config {
     type: "incremental",
     uniqueKey: ["org_urn","subscription_urn","usage_type_id","period_id","usage_date"],
-    schema: 'usage'
+    schema: 'usage',
+    bigquery: {
+      partitionBy: "period_key",
+      clusterBy: ["org_urn","subscription_urn","usage_type_id","period_id","usage_date"]
+    }
 }
 
 js {
