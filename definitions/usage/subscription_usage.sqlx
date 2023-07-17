@@ -3,7 +3,7 @@ config {
     uniqueKey: ["org_urn","subscription_urn","usage_type_id","period_id","usage_date"],
     schema: 'usage',
     bigquery: {
-      partitionBy: "period_key",
+      partitionBy: "TIMESTAMP_TRUNC(etl_update, MONTH)",
       clusterBy: ["org_urn","subscription_urn","usage_type_id","period_id","usage_date"]
     }
 }
