@@ -9,8 +9,13 @@ function getStartOfPreviousDay(numDays) {
   // Return the timestamp
   const formattedDate = previousDate.toISOString().replace('T', ' ').replace('Z', ' UTC');
   return formattedDate;
-}
+};
+
+
+
+
 
 module.exports = {
-  getStartOfPreviousDay,
+  getStartOfPreviousDay
 };
+

@@ -1,0 +1,28 @@
+config {
+    type: "view",
+    schema: "usage"
+}
+
+select
+    org_urn,
+    subscription_id,
+    service_type_id,
+    subscription_urn,
+    usage_type_id,
+    period_id,
+    usage,
+    period_key,
+    plan_urn,
+    state,
+    iccid,
+    msisdn,
+    plan_type_id,
+    payment_option_id,
+    cost_center_urn,
+    usage_date exact_usage_date,
+    DATE(usage_date) usage_date,
+   --${get_period_key("usage_date")} AS period_key,
+    time_stamp,
+    etl_update
+from etl_cpro.etl_subscription_usage
+where etl_update > '2023-07-15'
