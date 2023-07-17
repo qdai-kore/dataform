@@ -4,7 +4,7 @@ config {
     schema: 'usage',
     bigquery: {
       partitionBy: "TIMESTAMP_TRUNC(etl_update, MONTH)",
-      clusterBy: ["org_urn","subscription_urn","usage_type_id","period_id","usage_date"]
+      clusterBy: ["org_urn","subscription_urn"]
     }
 }
 
