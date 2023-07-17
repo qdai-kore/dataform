@@ -21,7 +21,6 @@ select
     cost_center_urn,
     usage_date exact_usage_date,
     DATE(usage_date) usage_date,
-   --${get_period_key("usage_date")} AS period_key,
     time_stamp,
     etl_update
 from etl_cpro.etl_subscription_usage
