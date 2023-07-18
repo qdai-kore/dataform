@@ -1,10 +1,10 @@
 config {
     type: "incremental",
-    uniqueKey: ["org_urn","subscription_urn","usage_type_id","period_id","usage_date"],
+    uniqueKey: ["period_key","org_urn","subscription_urn","usage_type_id","period_id","usage_date"],
     schema: 'usage',
     bigquery: {
       partitionBy: "TIMESTAMP_TRUNC(exact_usage_date, MONTH)",
-      clusterBy: ["org_urn","subscription_urn"]
+      clusterBy: ["period_key","period_id","org_urn","subscription_urn"]
     }
 }
 

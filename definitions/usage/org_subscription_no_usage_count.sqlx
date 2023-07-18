@@ -1,0 +1,56 @@
+config { 
+    type: 'incremental',
+    schema: 'finance'
+}
+
+js {
+    const sub_no_usage_last_activation_days = dataform.projectConfig.vars.sub_no_usage_last_activation_days;
+    const periodInfo = get_period_info(-1);
+    const period_key = periodInfo.period_key;
+	const period_start_date = periodInfo.period_start_date;
+	const period_end_date = periodInfo.period_end_date;
+    const buffer_activated_date = new Date();
+    var end_date = new Date(period_end_date);
+    buffer_activated_date.setDate(end_date.getDate() - sub_no_usage_last_activation_days);
+    const buffer_activated_dateStr = buffer_activated_date.toISOString();
+}
+
+with org_period_no_usage_count as (
+    select 
+        org_urn, 
+        period_key,
+        period_start_date, 
+        period_end_date,
+        state,
+        Count(case 
+                when s.last_activated_date is null 
+                or s.last_activated_date < '${buffer_activated_dateStr}' then subscription_urn
+                end)
+            as sub_zero_usage_count,
+        Count(case 
+                when s.last_activated_date >= '${buffer_activated_dateStr}' 
+                and s.last_activated_date < '${period_end_date}'  then subscription_urn
+                end) 
+            as recenty_activated_sub_zero_usage_count,
+        count(*) subscription_count
+    from ${ref('subscription_no_usage_by_period')} s
+    group by org_urn, period_key, period_start_date, period_end_date,state
+)
+,final as (
+    select 
+    o.name as org_name,
+    c.org_urn,
+    c.period_key,
+    c.period_start_date, 
+    c.period_end_date,
+    c.state,
+    c.sub_zero_usage_count,
+    c.recenty_activated_sub_zero_usage_count,
+    c.subscription_count
+    from org_period_no_usage_count c
+    join org.etl_organization o on o.org_urn = c.org_urn
+    where c.period_key = '${period_key}'
+        
+)
+
+select * from final
