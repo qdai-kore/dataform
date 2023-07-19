@@ -1,0 +1,11 @@
+config {
+    type: 'view',
+    schema: 'org'
+}
+
+with final as (
+    select * from org.etl_organization
+    where org_type <> 'Costcenter'
+)
+
+select * from final

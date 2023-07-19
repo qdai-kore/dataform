@@ -28,7 +28,8 @@ module.exports = (target_period_offset) => {
   return {
     period_key:period_key,
     period_start_date: periodStartDate.toISOString(),
-    period_end_date: periodEndDate.toISOString()
+    period_end_date: periodEndDate.toISOString(),
+    month_name: get_friendly_name_of_date(periodEndDate)
   };
 }
 
