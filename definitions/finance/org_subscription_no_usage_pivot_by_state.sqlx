@@ -1,0 +1,31 @@
+config { 
+    type: 'view',
+    schema: 'finance'
+}
+
+
+with final as (
+    select
+        sc.org_name,
+        sc.org_urn, 
+        sc.period_key,
+        sc.period_start_date, 
+        sc.period_end_date,
+        acct.parent_account_name,
+        acct.account_owner,
+        poc.email,
+        sum(case when sc.state = 'Active' then (sc.subscription_count - sc.recenty_activated_sub_zero_usage_count) else 0 end) as active,
+        sum(case when sc.state = 'Test' then (sc.subscription_count - sc.recenty_activated_sub_zero_usage_count) else 0 end) as test,
+        sum(case when sc.state = 'Ready' then (sc.subscription_count - sc.recenty_activated_sub_zero_usage_count) else 0 end) as ready,
+        sum(case when sc.state = 'Suspended With Charge' then (sc.subscription_count - sc.recenty_activated_sub_zero_usage_count) else 0 end) as suspended_with_charge,
+
+        sum(sc.subscription_count - sc.recenty_activated_sub_zero_usage_count) total_count 
+    from ${ ref("org_subscription_no_usage_count")} sc
+    join org.etl_organization org1 on org1.org_urn = sc.org_urn
+    left join org.sf_cpro_account acct on sc.org_urn = acct.org_urn
+    left join org.sf_point_of_contact poc on CONCAT(poc.first_name,' ',poc.last_name) = acct.account_owner
+    where org1.status = 'Active'
+    group by sc.org_name, sc.org_urn, acct.parent_account_name,sc.period_key, sc.period_start_date, sc.period_end_date,acct.account_owner,poc.email
+)
+
+select * from final
