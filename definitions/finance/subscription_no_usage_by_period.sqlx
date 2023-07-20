@@ -1,0 +1,52 @@
+config {
+	type:"incremental",
+	schema: 'finance',
+	bigquery: {
+		partitionBy: "DATE_TRUNC(period_end_date, MONTH)"
+	}
+}
+js {
+    const periodInfo = get_period_info(-1);
+    const period_key = periodInfo.period_key;
+	const period_start_date = periodInfo.period_start_date;
+	const period_end_date = periodInfo.period_end_date;
+}
+
+
+with active_sub_with_period_data as (
+	select 
+		'${period_key}' period_key,
+		'${period_start_date}' period_start_date,
+		'${period_end_date}' period_end_date,
+		s.subscription_urn,
+		s.org_urn,
+		s.iccid,
+		s.last_active_msisdn,
+		s.state,
+		s.last_activated_date
+	from inventory.subscription_current s
+	where s.state in ('Active','Test', 'Ready', 'Suspended With Charge') 
+	and (s.last_activated_date is null or s.last_activated_date < '${period_end_date}')
+),
+final as (
+	select 
+		s.period_key,
+		DATE(TIMESTAMP(s.period_start_date)) period_start_date,
+		DATE(TIMESTAMP(s.period_end_date)) period_end_date,
+		s.org_urn, 
+		s.subscription_urn,
+		s.iccid,
+		s.last_active_msisdn,
+		s.state,
+		TIMESTAMP(s.last_activated_date) last_activated_date
+	from active_sub_with_period_data s
+	left join usage.subscription_usage u 
+		on u.period_key = s.period_key
+		and period_id = 2
+		and s.org_urn= u.org_urn 
+		and s.subscription_urn  = u.subscription_urn 
+	where u.subscription_urn  is null 
+
+)
+
+select * from final
