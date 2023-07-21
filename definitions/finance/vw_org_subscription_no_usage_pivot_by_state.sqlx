@@ -1,6 +1,8 @@
 config { 
     type: 'view',
-    schema: 'finance'
+    schema: 'finance',
+    tags: ['sub_no_usage_vw'],
+    description: 'pivot the sub no usage table by state'
 }
 
 

@@ -1,6 +1,7 @@
 config {
 	type:"incremental",
 	schema: 'finance',
+	tags: ['sub_no_usage_inc'],
 	bigquery: {
 		partitionBy: "DATE_TRUNC(period_end_date, MONTH)"
 	}

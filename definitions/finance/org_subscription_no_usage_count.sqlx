@@ -1,6 +1,7 @@
 config { 
     type: 'incremental',
-    schema: 'finance'
+    schema: 'finance',
+    tags: ['sub_no_usage_inc']
 }
 
 js {
@@ -48,7 +49,7 @@ with org_period_no_usage_count as (
     c.recenty_activated_sub_zero_usage_count,
     c.subscription_count
     from org_period_no_usage_count c
-    join org.etl_organization o on o.org_urn = c.org_urn
+    join ${ref('stg_organization')} o on o.org_urn = c.org_urn
     where c.period_key = '${period_key}'
         
 )

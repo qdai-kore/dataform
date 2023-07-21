@@ -1,6 +1,7 @@
 config {
     type: "view",
-    schema: "finance"
+    schema: "finance",
+    tags: ['sub_no_usage_vw']
 }
 js {
     const last_n_periods = dataform.projectConfig.vars.sub_no_usage_last_n_periods;
