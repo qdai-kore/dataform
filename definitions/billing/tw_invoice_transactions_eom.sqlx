@@ -24,7 +24,7 @@ select
   data_invoice_period_status,
   data_transaction_id,
   data_transaction_direction,
-  SAFE_CAST(data_quantity AS INT64) as data_quantity,
+  SAFE_CAST(data_quantity AS DECIMAL) as data_quantity,
   data_unit_of_measure,
   data_sku_primary_id,
   data_sku_platform_id,
