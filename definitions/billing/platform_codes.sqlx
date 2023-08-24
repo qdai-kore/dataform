@@ -1,0 +1,9 @@
+config { 
+    type: 'view',
+    schema: 'billing',
+    tags: ['twilio']
+}
+
+select 'tw' as platform_code, 'Twilio' as platform_name
+union all
+select 'cpro' as platform_code, 'CPro' as platform_name
