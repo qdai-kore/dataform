@@ -6,7 +6,7 @@ config {
 with all_data as
 (
 	select * from etl_cpro.etl_inv_subscription
-	WHERE etl_update > DATE(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY))
+	WHERE etl_update > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY)
 	union all
 	select * from inventory.subscription_current
 )
