@@ -1,0 +1,15 @@
+config {
+    type: "view",
+    schema: 'inventory'
+}
+
+with all_data as
+(
+	select * from etl_cpro.etl_inv_subscription
+	WHERE etl_update > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY)
+	union all
+	select * from inventory.subscription_current
+)
+select array_agg(t order by etl_update desc limit 1)[offset(0)].*
+from all_data t
+group by t.subscription_urn
