@@ -3,13 +3,6 @@ config {
     schema: 'inventory'
 }
 
-js {
-  const last_n_days = dataform.projectConfig.vars.incremental_days;
-  // Get start of previous day
-  const prevDay = constants.getStartOfPreviousDay(last_n_days);
-
-}
-
 with all_data as
 (
 	select * from etl_cpro.etl_inv_subscription
