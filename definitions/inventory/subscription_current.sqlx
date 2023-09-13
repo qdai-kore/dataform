@@ -11,6 +11,15 @@ js {
 
 }
 
+-- after run, delete any sims are removed
+postOperations {
+  	delete from inventory.subscription_current where subscription_id in (
+	    select subscription_id  
+      from etl_cpro.etl_inv_subscription 
+      where  etl_update >'${prevDay}' and etl_action ='Delete'
+	)
+}
+
 select array_agg(t order by etl_update desc limit 1)[offset(0)].*
 from etl_cpro.etl_inv_subscription t
 ${ when(incremental(), `WHERE etl_update >= '${prevDay}'`, `WHERE etl_update>='2023-06-01'`) }
