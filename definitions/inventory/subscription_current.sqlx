@@ -5,15 +5,15 @@ config {
 }
 
 js {
-  const last_n_days = dataform.projectConfig.vars.incremental_days;
+  const last_n_days = dataform.projectConfig.vars.incremental_days + 1;
   // Get start of previous day
   const prevDay = constants.getStartOfPreviousDay(last_n_days);
 
 }
 
 -- after run, delete any sims are removed
-postOperations {
-  	delete from inventory.subscription_current where subscription_id in (
+post_operations {
+  	delete from ${self()} where subscription_id in (
 	    select subscription_id  
       from etl_cpro.etl_inv_subscription 
       where  etl_update >'${prevDay}' and etl_action ='Delete'
