@@ -1,0 +1,41 @@
+config { 
+    type: 'incremental',
+    schema: 'billing',
+    tags: ['twilio']
+}
+
+js {
+  const last_n_days = dataform.projectConfig.vars.incremental_days;
+  // Get start of previous day
+  const prevDay = constants.getStartOfPreviousDay(last_n_days);
+
+}
+
+select 
+id,
+type,
+data_source_platform_code,
+data_owner_account_platform_id,
+data_invoice_account_platform_id,
+data_owner_account_primary_id,
+data_transaction_id,
+data_transaction_direction,
+SAFE_CAST(data_quantity AS INT64) data_quantity,
+data_invoice_billing_period,
+data_invoice_account_primary_id,
+data_invoice_stream_type,
+data_invoice_period_status,
+data_sku_platform_id,
+data_event_time,
+data_labels,
+data_extended_sku_grouping,
+etl_update
+from etl_cpro.etl_twilio_billing_events
+${ when(incremental(), `WHERE etl_update >= '${prevDay}'`, `WHERE etl_update>='2023-06-01'`) }
+
+
+
+
+
+
+

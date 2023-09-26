@@ -1,0 +1,50 @@
+config { 
+    type: 'incremental',
+    schema: 'billing',
+    tags: ['twilio','invoice']
+}
+
+js {
+  const last_n_days = dataform.projectConfig.vars.incremental_days;
+  // Get start of previous day
+  const prevDay = constants.getStartOfPreviousDay(last_n_days);
+
+}
+
+select 
+  id,
+  type,
+  data_source_platform_code,
+  data_invoice_billing_period,
+  data_owner_account_primary_id,
+  data_owner_account_platform_id,
+  data_invoice_account_primary_id,
+  data_invoice_account_platform_id,
+  data_invoice_stream_type,
+  data_invoice_period_status,
+  data_transaction_id,
+  data_transaction_direction,
+  SAFE_CAST(data_quantity AS INT64) as data_quantity,
+  data_unit_of_measure,
+  data_sku_primary_id,
+  data_sku_platform_id,
+  data_event_time,
+  data_rate,
+  data_rate_type,
+  data_currency,
+  SAFE_CAST(data_total AS DECIMAL) as data_total,
+  data_labels,
+  data_extended_sku_grouping,
+  data_enrichments,
+  owner,
+  created_date_time,
+  etl_update
+from etl_cpro.etl_twilio_billing_invoice_transactions_jit
+${ when(incremental(), `WHERE etl_update >= '${prevDay}'`, `WHERE etl_update>='2023-06-01'`) }
+
+
+
+
+
+
+

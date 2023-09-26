@@ -44,3 +44,4 @@ select
     time_stamp,
     etl_update
 from latest_usage
+where usage>0
