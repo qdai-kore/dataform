@@ -5,12 +5,17 @@ config {
 }
 js {
     const last_n_periods = dataform.projectConfig.vars.sub_no_usage_last_n_periods;
-    var metrics_query = "";
+    var zero_usage_query = "";
+    var sim_total_query = "";
     for (let i = 1; i <= last_n_periods; i++) {
     var pInfo = get_period_info(-i);
-    metrics_query += "SUM(case when sc.period_end_date = DATE('" + pInfo.period_end_date + "') then "+
+    zero_usage_query += "SUM(case when sc.period_end_date = DATE('" + pInfo.period_end_date + "') then "+
     "(sc.subscription_count - sc.recenty_activated_sub_zero_usage_count) "+
     " else 0 end) as "+ pInfo.month_name + ",\n";
+
+    sim_total_query += "SUM(case when sc.period_end_date = DATE('" + pInfo.period_end_date + "') then "+
+    "(c.sim_count) "+
+    " else 0 end) as "+ pInfo.month_name + "_Total_SIMs,\n";
     }
 }
 
@@ -19,17 +24,21 @@ select
     o.name,
     acct.kore_industry,
     acct.account_owner,
+    acct.kore_p_and_l_mapping,
     sc.state,
-    ${metrics_query} 
+    ${zero_usage_query}
+    ${sim_total_query}
     o.org_urn
 from ${ctx.ref("org","stg_organization")} o
     left join ${ctx.ref("org_subscription_no_usage_count")} sc on o.org_urn = sc.org_urn
+    left join inventory.sub_count_by_state c on sc.org_urn = c.org_urn and sc.service_type_id = c.service_type_id and sc.state = c.state and sc.period_end_date = c.created_date 
     left join org.sf_cpro_account acct on o.org_urn = acct.org_urn
     where o.status = 'Active'
     group by   
     acct.parent_account_name,  
-    acct.kore_industry,
     acct.account_owner,
+    acct.kore_industry,
+    acct.kore_p_and_l_mapping,
     o.name,
     o.org_urn,
     sc.state
