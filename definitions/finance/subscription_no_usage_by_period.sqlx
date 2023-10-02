@@ -24,10 +24,11 @@ with active_sub_with_period_data as (
 		s.iccid,
 		s.last_active_msisdn,
 		s.state,
+		s.service_type_id,
 		s.last_activated_date
 	from inventory.subscription_current s
 	where s.state in ('Active','Test', 'Ready', 'Suspended With Charge') 
-	and (s.last_activated_date is null or s.last_activated_date < '${period_end_date}')
+	and (s.last_activated_date is null or s.last_activated_date < '${period_end_date}') 
 ),
 final as (
 	select 
@@ -39,6 +40,7 @@ final as (
 		s.iccid,
 		s.last_active_msisdn,
 		s.state,
+		s.service_type_id,
 		TIMESTAMP(s.last_activated_date) last_activated_date
 	from active_sub_with_period_data s
 	left join usage.subscription_usage u 
