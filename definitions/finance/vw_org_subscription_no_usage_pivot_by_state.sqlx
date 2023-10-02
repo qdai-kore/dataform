@@ -5,29 +5,61 @@ config {
     description: 'pivot the sub no usage table by state'
 }
 
-
-with final as (
+with pivoted as (
     select
         sc.org_name,
         sc.org_urn, 
         sc.period_key,
         sc.period_start_date, 
         sc.period_end_date,
-        acct.parent_account_name,
-        acct.account_owner,
-        poc.email,
         sum(case when sc.state = 'Active' then (sc.subscription_count - sc.recenty_activated_sub_zero_usage_count) else 0 end) as active,
         sum(case when sc.state = 'Test' then (sc.subscription_count - sc.recenty_activated_sub_zero_usage_count) else 0 end) as test,
         sum(case when sc.state = 'Ready' then (sc.subscription_count - sc.recenty_activated_sub_zero_usage_count) else 0 end) as ready,
         sum(case when sc.state = 'Suspended With Charge' then (sc.subscription_count - sc.recenty_activated_sub_zero_usage_count) else 0 end) as suspended_with_charge,
-
-        sum(sc.subscription_count - sc.recenty_activated_sub_zero_usage_count) total_count 
-    from ${ ref("org_subscription_no_usage_count")} sc
-    join org.etl_organization org1 on org1.org_urn = sc.org_urn
+        sum(case when sc.state = 'Active' then c.sim_count  else 0 end) as active_total_sims,
+        sum(case when sc.state = 'Test' then c.sim_count  else 0 end) as test_total_sims,
+        sum(case when sc.state = 'Ready' then c.sim_count  else 0 end) as ready_total_sims,
+        sum(case when sc.state = 'Suspended With Charge' then c.sim_count else 0 end) as suspended_with_charge_total_sims,
+        sum(sc.subscription_count - sc.recenty_activated_sub_zero_usage_count) total_zero_usage,
+        sum(c.sim_count) total_sims
+    from finance.org_subscription_no_usage_count sc
+    join inventory.sub_count_by_state c on sc.org_urn = c.org_urn and sc.service_type_id = c.service_type_id and sc.state = c.state and sc.period_end_date = c.created_date 
+    group by sc.org_name, sc.org_urn, sc.period_key, sc.period_start_date, sc.period_end_date
+),
+acct_owner_first_email as (
+	select 
+		CONCAT(poc.first_name,' ',poc.last_name) acct_owner, 
+		MAX(email) email
+	from org.sf_point_of_contact poc 
+	group by acct_owner
+),
+enriched as (
+    select 
+        sc.org_name,
+        sc.org_urn, 
+        sc.period_key,
+        sc.period_start_date, 
+        sc.period_end_date,
+        sc.active,
+        sc.test,
+        sc.ready,
+        sc.suspended_with_charge,
+        sc.active_total_sims,
+        sc.test_total_sims,
+        sc.ready_total_sims,
+        sc.suspended_with_charge_total_sims,
+        sc.total_zero_usage,
+        sc.total_sims,
+        acct.parent_account_name,
+        acct.account_owner,
+        e.email
+    from pivoted sc
     left join org.sf_cpro_account acct on sc.org_urn = acct.org_urn
-    left join org.sf_point_of_contact poc on CONCAT(poc.first_name,' ',poc.last_name) = acct.account_owner
-    where org1.status = 'Active'
-    group by sc.org_name, sc.org_urn, acct.parent_account_name,sc.period_key, sc.period_start_date, sc.period_end_date,acct.account_owner,poc.email
-)
+    left join acct_owner_first_email e on e.acct_owner = acct.account_owner
+),
 
+final as (
+    select *, total_zero_usage/NULLIF(total_sims,0)*100 zero_usage_percentage
+    from enriched
+)
 select * from final

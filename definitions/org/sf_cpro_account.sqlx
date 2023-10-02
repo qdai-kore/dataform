@@ -1,0 +1,29 @@
+config {
+    type: 'view',
+    schema: 'org'
+}
+
+
+WITH final AS (
+         SELECT 
+            org.org_urn,
+            c.account_name, 
+            p.account_name as parent_account_name,
+            c.account_status,
+            c.account_owner,
+            c.account_record_type,
+            c.id_18,
+            c.kore_industry,
+            c.kore_p_and_l_mapping,
+            c.kore_use_case,
+            c.netsuite_id,
+            c.sales_region,
+            c.account_category,
+            c.account_owner_title
+           FROM `org.sf_child_account` c
+             JOIN `org.sf_parent_account` p ON  c.parent_account = p.id_18
+             JOIN `org.etl_organization` org ON  concat('Cpro_',cast(org.org_id as string)) = c.cpro_id 
+            where org.status = 'Active' and c.account_status is not null
+        )
+ SELECT *
+   FROM final

@@ -22,6 +22,7 @@ with org_period_no_usage_count as (
         period_key,
         period_start_date, 
         period_end_date,
+        service_type_id,
         state,
         Count(case 
                 when s.last_activated_date is null 
@@ -35,7 +36,7 @@ with org_period_no_usage_count as (
             as recenty_activated_sub_zero_usage_count,
         count(*) subscription_count
     from ${ref('subscription_no_usage_by_period')} s
-    group by org_urn, period_key, period_start_date, period_end_date,state
+    group by org_urn, period_key, period_start_date, period_end_date,service_type_id,state
 )
 ,final as (
     select 
@@ -44,6 +45,7 @@ with org_period_no_usage_count as (
     c.period_key,
     c.period_start_date, 
     c.period_end_date,
+    c.service_type_id,
     c.state,
     c.sub_zero_usage_count,
     c.recenty_activated_sub_zero_usage_count,
