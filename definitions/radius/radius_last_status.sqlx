@@ -1,0 +1,36 @@
+config {
+    type: "incremental",
+    uniqueKey: ["calling_station_id"],
+    schema: 'radius',
+    bigquery: {
+      clusterBy: ["calling_station_id"]
+    }
+}
+
+js {
+  const last_n_days = dataform.projectConfig.vars.incremental_days;
+  // Get start of previous day
+  const prevDay = constants.getStartOfPreviousDay(last_n_days);
+
+}
+
+with group_msisdn as 
+(
+	select array_agg(t order by PARSE_TIMESTAMP("%b %e %Y %k:%M:%S UTC",JSON_EXTRACT_SCALAR(radius_raw,'$.EVENT-TIMESTAMP')) desc limit 1)[offset(0)].*
+	from etl_cpro.etl_radius_acct_rich t 
+	${ when(incremental(), `WHERE etl_update >= '${prevDay}'`, `WHERE etl_update>='2023-10-03'`) }
+	group by JSON_EXTRACT_SCALAR(des_sim_info,'$.MSISDN')
+)
+, extracted as
+(
+	select
+	JSON_EXTRACT_SCALAR(radius_raw,'$.CALLING-STATION-ID') calling_station_id,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.CALLED-STATION-ID') called_station_id,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.ACCT-STATUS-TYPE') acct_status_type,
+	PARSE_TIMESTAMP("%b %e %Y %k:%M:%S UTC",JSON_EXTRACT_SCALAR(radius_raw,'$.EVENT-TIMESTAMP')) event_timestamp
+	from group_msisdn
+)
+select *,  
+case when acct_status_type = 'Stop' then 'NotConnected' else 'Connected' end connection
+from extracted
+where calling_station_id is not null
