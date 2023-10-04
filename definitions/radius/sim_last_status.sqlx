@@ -27,6 +27,9 @@ with group_msisdn as
 	JSON_EXTRACT_SCALAR(radius_raw,'$.CALLING-STATION-ID') calling_station_id,
 	JSON_EXTRACT_SCALAR(radius_raw,'$.CALLED-STATION-ID') called_station_id,
 	JSON_EXTRACT_SCALAR(radius_raw,'$.ACCT-STATUS-TYPE') acct_status_type,
+	JSON_EXTRACT_SCALAR(des_sim_info,'$.PlatformID') platform_id,
+	JSON_EXTRACT_SCALAR(des_sim_info,'$.Subscription.SubscriptionURN') subscription_urn,
+	JSON_EXTRACT_SCALAR(des_sim_info,'$.ICCID') iccid,
 	PARSE_TIMESTAMP("%b %e %Y %k:%M:%S UTC",JSON_EXTRACT_SCALAR(radius_raw,'$.EVENT-TIMESTAMP')) event_timestamp
 	from group_msisdn
 )
