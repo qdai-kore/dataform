@@ -19,7 +19,8 @@ with group_msisdn as
 	select array_agg(t order by PARSE_TIMESTAMP("%b %e %Y %k:%M:%S UTC",JSON_EXTRACT_SCALAR(radius_raw,'$.EVENT-TIMESTAMP')) desc limit 1)[offset(0)].*
 	from etl_cpro.etl_radius_acct_rich t 
 	${ when(incremental(), `WHERE etl_update >= '${prevDay}'`, `WHERE etl_update>='2023-10-03'`) }
-	group by JSON_EXTRACT_SCALAR(des_sim_info,'$.MSISDN')
+	and JSON_EXTRACT_SCALAR(radius_raw,'$.CALLING-STATION-ID') is not null
+	group by JSON_EXTRACT_SCALAR(radius_raw,'$.CALLING-STATION-ID')
 )
 , extracted as
 (
