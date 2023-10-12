@@ -19,6 +19,7 @@ js {
     }
 }
 
+
 select 
     acct.parent_account_name,
     o.name,
@@ -31,7 +32,9 @@ select
     o.org_urn
 from ${ctx.ref("org","stg_organization")} o
     left join ${ctx.ref("org_subscription_no_usage_count")} sc on o.org_urn = sc.org_urn
-    left join inventory.sub_count_by_state c on sc.org_urn = c.org_urn and sc.service_type_id = c.service_type_id and sc.state = c.state and sc.period_end_date = c.created_date 
+    left join finance.sub_count_by_state_with_legacy c on sc.org_urn = c.org_urn 
+        and (sc.service_type_id = 0 or sc.service_type_id = c.service_type_id)
+        and sc.state = c.state and sc.period_end_date = c.created_date 
     left join org.sf_cpro_account acct on o.org_urn = acct.org_urn
     where o.status = 'Active'
     group by   
