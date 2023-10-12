@@ -5,6 +5,12 @@ config {
     description: 'pivot the sub no usage table by state'
 }
 
+js {
+    const last_n_periods = dataform.projectConfig.vars.sub_no_usage_last_n_periods;
+    var pInfo = get_period_info(-last_n_periods);
+
+}
+
 with pivoted as (
     select
         sc.org_name,
@@ -23,7 +29,10 @@ with pivoted as (
         sum(sc.subscription_count - sc.recenty_activated_sub_zero_usage_count) total_zero_usage,
         sum(c.sim_count) total_sims
     from finance.org_subscription_no_usage_count sc
-    join inventory.sub_count_by_state c on sc.org_urn = c.org_urn and sc.service_type_id = c.service_type_id and sc.state = c.state and sc.period_end_date = c.created_date 
+    join finance.sub_count_by_state_with_legacy c on sc.org_urn = c.org_urn 
+    and (sc.service_type_id =0 or sc.service_type_id = c.service_type_id)
+    and sc.state = c.state and sc.period_end_date = c.created_date 
+    and sc.period_end_date >= extract(date from TIMESTAMP('${pInfo.period_end_date}'))
     group by sc.org_name, sc.org_urn, sc.period_key, sc.period_start_date, sc.period_end_date
 ),
 acct_owner_first_email as (
