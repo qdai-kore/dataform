@@ -1,7 +1,10 @@
 config {
     type: "incremental",
     uniqueKey: ["subscription_urn"],
-    schema: 'inventory'
+    schema: 'inventory',
+    bigquery:{
+      clusterBy: ["org_urn","service_type_id","state","subscription_urn"]
+    }
 }
 
 js {
