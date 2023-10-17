@@ -3,21 +3,45 @@ config {
     schema: "finance",
     tags: ['sub_no_usage_vw']
 }
+
 js {
     const last_n_periods = dataform.projectConfig.vars.sub_no_usage_last_n_periods;
     var pInfo = get_period_info(-last_n_periods);
 
 }
 
-with union_data as 
-(select org_urn, 0 service_type_id , state, sum(sim_count) sim_count, created_date
-from inventory.sub_count_by_state 
-where created_date <'2023-09-24' 
-group by  org_urn, state, created_date
-union all 
-select org_urn, service_type_id, state, sim_count, created_date
-from inventory.sub_count_by_state 
-where created_date >= '2023-09-24'
-)
-select * from union_data
-where created_date >= extract(date from TIMESTAMP('${pInfo.period_end_date}'))
+WITH
+  union_data AS (
+  SELECT
+    org_urn,
+    0 service_type_id,
+    state,
+    SUM(sim_count) sim_count,
+    created_date
+  FROM
+    inventory.sub_count_by_state
+  WHERE
+    created_date <'2023-09-24'
+  GROUP BY
+    org_urn,
+    state,
+    created_date
+  UNION ALL
+  SELECT
+    org_urn,
+    service_type_id,
+    state,
+    sim_count,
+    created_date
+  FROM
+    inventory.sub_count_by_state
+  WHERE
+    created_date >= '2023-09-24' )
+SELECT
+  *
+FROM
+  union_data
+WHERE
+  created_date >= EXTRACT(date FROM TIMESTAMP('${pInfo.period_end_date}'))
+  AND EXTRACT(day FROM created_date) = 24
+  AND state in ('Active','Test','Ready','Suspended With Charge')
