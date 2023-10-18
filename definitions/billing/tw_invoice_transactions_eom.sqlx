@@ -3,7 +3,7 @@ config {
     schema: 'billing',
     tags: ['twilio','invoice'],
     bigquery:{
-      partitionBy:"DATE_TRUNC(etl_update, MONTH)",
+      partitionBy:"DATE_TRUNC(event_time, MONTH)",
       clusterBy:["source_platform_code","invoice_billing_period","invoice_account_primary_id","sku_primary_id"]
     }
 }
