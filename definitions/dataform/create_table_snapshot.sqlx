@@ -7,7 +7,7 @@ DECLARE current_date_str STRING;
 DECLARE query_template STRING;
 
 FOR record IN
-  (SELECT table_id,expire_days from dataform.snapshot_tables)
+  (SELECT table_id,expire_days from dataform.snapshot_tables where enabled = true)
 DO
 
   SET current_date_str = FORMAT_TIMESTAMP('%Y%m%d', CURRENT_TIMESTAMP());
