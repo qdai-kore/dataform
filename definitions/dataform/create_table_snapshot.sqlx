@@ -1,0 +1,26 @@
+config {
+    type: "operations",
+    schema: "dataform"
+}
+
+DECLARE current_date_str STRING;
+DECLARE query_template STRING;
+
+FOR record IN
+  (SELECT table_id,expire_days from dataform.snapshot_tables)
+DO
+
+  SET current_date_str = FORMAT_TIMESTAMP('%Y%m%d', CURRENT_TIMESTAMP());
+  
+  -- Create a query template to loop through tables and create snapshots
+  SET query_template = '''
+    CREATE SNAPSHOT TABLE `''' || record.table_id || '''_snapshot_''' || current_date_str || '''` 
+    CLONE ''' || record.table_id || '''
+    OPTIONS(expiration_timestamp = TIMESTAMP \'''' || 
+      TIMESTAMP_ADD(CURRENT_TIMESTAMP(), INTERVAL record.expire_days DAY) || 
+    '''\' )''';
+
+  EXECUTE IMMEDIATE query_template;
+END FOR;
+
+
