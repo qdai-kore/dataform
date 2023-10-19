@@ -1,7 +1,11 @@
 config { 
     type: 'incremental',
     schema: 'billing',
-    tags: ['twilio','invoice']
+    tags: ['twilio','invoice'],
+    bigquery:{
+      partitionBy:"DATE_TRUNC(event_time, MONTH)",
+      clusterBy:["source_platform_code","invoice_billing_period","invoice_account_primary_id","sku_primary_id"]
+    }
 }
 
 js {
@@ -10,40 +14,53 @@ js {
   const prevDay = constants.getStartOfPreviousDay(last_n_days);
 
 }
+with latest as 
+(
+  select array_agg(t order by etl_update desc limit 1)[offset(0)].*
+  from etl_cpro.etl_twilio_billing_invoice_transactions_eom t
+    LEFT JOIN UNNEST(t.data_extended_sku_grouping) sku_key_values
+    ${ when(incremental(), `WHERE etl_update >= '${prevDay}'`, `WHERE etl_update>='2023-10-01'`) }
+  group by 
+    t.data_source_platform_code, 
+    t.data_invoice_billing_period,
+    DATE_TRUNC(CAST(t.data_event_time as timestamp),DAY),
+    t.data_invoice_account_primary_id,
+    t.data_sku_primary_id,
+    t.data_owner_account_primary_id,
+    t.data_transaction_direction,
+    sku_key_values.key,
+    sku_key_values.value,
+    t.data_transaction_id
+)
+
 
 select 
-  id,
-  type,
-  data_source_platform_code,
-  data_invoice_billing_period,
-  data_owner_account_primary_id,
-  data_owner_account_platform_id,
-  data_invoice_account_primary_id,
-  data_invoice_account_platform_id,
-  data_invoice_stream_type,
-  data_invoice_period_status,
-  data_transaction_id,
-  data_transaction_direction,
-  SAFE_CAST(data_quantity AS INT64) as data_quantity,
-  data_unit_of_measure,
-  data_sku_primary_id,
-  data_sku_platform_id,
-  data_event_time,
-  data_rate,
-  data_rate_type,
-  data_currency,
-  SAFE_CAST(data_total AS DECIMAL) as data_total,
-  data_labels,
-  data_extended_sku_grouping,
-  data_enrichments,
+  data_source_platform_code as source_platform_code,
+  data_invoice_billing_period as  invoice_billing_period,
+  data_owner_account_primary_id as owner_account_primary_id,
+  data_owner_account_platform_id as owner_account_platform_id,
+  data_invoice_account_primary_id as invoice_account_primary_id,
+  data_invoice_account_platform_id as invoice_account_platform_id,
+  data_invoice_stream_type as invoice_stream_type,
+  data_invoice_period_status as invoice_period_status,
+  data_transaction_id as transaction_id,
+  data_transaction_direction as transaction_direction,
+  SAFE_CAST(data_quantity AS DECIMAL) as data_quantity,
+  data_unit_of_measure as unit_of_measure,
+  data_sku_primary_id as sku_primary_id,
+  data_sku_platform_id as sku_platform_id,
+  CAST(data_event_time as timestamp) as event_time,
+  data_rate as rate,
+  data_rate_type as rate_type,
+  data_currency as currency,
+  SAFE_CAST(data_total AS DECIMAL) as total,
+  data_labels as labels,
+  data_extended_sku_grouping as extended_sku_grouping,
+  data_enrichments as enrichments,
   owner,
   created_date_time,
   etl_update
-from etl_cpro.etl_twilio_billing_invoice_transactions_jit
-${ when(incremental(), `WHERE etl_update >= '${prevDay}'`, `WHERE etl_update>='2023-06-01'`) }
-
-
-
+from latest
 
 
 
