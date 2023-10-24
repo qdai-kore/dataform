@@ -15,11 +15,12 @@ DO
   -- Create a query template to loop through tables and create snapshots
   SET query_template = '''
     CREATE SNAPSHOT TABLE `''' || record.table_id || '''_snapshot_''' || current_date_str || '''` 
-    CLONE ''' || record.table_id || '''
-    OPTIONS(expiration_timestamp = TIMESTAMP \'''' || 
-      TIMESTAMP_ADD(CURRENT_TIMESTAMP(), INTERVAL record.expire_days DAY) || 
-    '''\' )''';
-
+    CLONE ''' || record.table_id 
+ #   || '''
+ #   OPTIONS(expiration_timestamp = TIMESTAMP \'''' || 
+ #     TIMESTAMP_ADD(CURRENT_TIMESTAMP(), INTERVAL record.expire_days DAY) || 
+ #   '''\' ) '''
+    ;
   EXECUTE IMMEDIATE query_template;
 END FOR;
 
