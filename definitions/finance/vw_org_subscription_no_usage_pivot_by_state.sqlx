@@ -28,8 +28,8 @@ with pivoted as (
         sum(case when sc.state = 'Suspended With Charge' then c.sim_count else 0 end) as suspended_with_charge_total_sims,
         sum(sc.subscription_count - sc.recenty_activated_sub_zero_usage_count) total_zero_usage,
         sum(c.sim_count) total_sims
-    from finance.org_subscription_no_usage_count sc
-    join finance.sub_count_by_state_with_legacy c on sc.org_urn = c.org_urn 
+    from ${ctx.ref("finance","org_subscription_no_usage_count")} sc
+    join ${ctx.ref("finance","sub_count_by_state_with_legacy")} c on sc.org_urn = c.org_urn 
     and (sc.service_type_id =0 or sc.service_type_id = c.service_type_id)
     and sc.state = c.state and sc.period_end_date = c.created_date 
     and sc.period_end_date >= extract(date from TIMESTAMP('${pInfo.period_end_date}'))
@@ -63,7 +63,7 @@ enriched as (
         acct.account_owner,
         e.email
     from pivoted sc
-    left join org.sf_cpro_account acct on sc.org_urn = acct.org_urn
+    left join ${ctx.ref("org","sf_cpro_account")} acct on sc.org_urn = acct.org_urn
     left join acct_owner_first_email e on e.acct_owner = acct.account_owner
 ),
 
