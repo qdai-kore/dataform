@@ -1,37 +1,60 @@
 config { 
     type: 'incremental',
     schema: 'billing',
-    tags: ['twilio']
+    tags: ['twilio'],
+    uniqueKey: ['source_platform_code','invoice_billing_period','invoice_account_primary_id','transaction_id'],
+    bigquery:{
+      partitionBy:"DATE_TRUNC(event_time, MONTH)",
+      clusterBy:["source_platform_code","invoice_billing_period","invoice_account_primary_id","transaction_id"]
+    }
 }
 
 js {
-  const last_n_days = dataform.projectConfig.vars.incremental_days;
-  // Get start of previous day
-  const prevDay = constants.getStartOfPreviousDay(last_n_days);
+  const last_n_min = dataform.projectConfig.vars.incremental_min;
+  // schedule every 30 min to get last 45 min of data, giving 15 min for edge data
+  const prevRunTime = constants.getPreviousMin(last_n_min);
 
 }
+
+with latest as 
+(
+  select array_agg(t order by etl_update desc limit 1)[offset(0)].*
+  from etl_cpro.etl_twilio_billing_events t
+    LEFT JOIN UNNEST(t.data_extended_sku_grouping) sku_key_values
+    ${ when(incremental(), `WHERE etl_update >= '${prevRunTime}'`, `WHERE etl_update>='2023-10-01'`) }
+  group by 
+    t.data_source_platform_code, 
+    t.data_invoice_billing_period,
+    DATE_TRUNC(SAFE_CAST(t.data_event_time as timestamp),DAY),
+    t.data_invoice_account_primary_id,
+    t.data_owner_account_primary_id,
+    t.data_transaction_direction,
+    sku_key_values.key,
+    sku_key_values.value,
+    t.data_transaction_id
+)
+
 
 select 
 id,
 type,
-data_source_platform_code,
-data_owner_account_platform_id,
-data_invoice_account_platform_id,
-data_owner_account_primary_id,
-data_transaction_id,
-data_transaction_direction,
+data_source_platform_code as source_platform_code,
+data_owner_account_platform_id as owner_account_platform_id,
+data_invoice_account_platform_id as invoice_account_platform_id,
+data_owner_account_primary_id as owner_account_primary_id,
+data_transaction_id as transaction_id,
+data_transaction_direction as transaction_direction,
 SAFE_CAST(data_quantity AS INT64) data_quantity,
-data_invoice_billing_period,
-data_invoice_account_primary_id,
-data_invoice_stream_type,
-data_invoice_period_status,
-data_sku_platform_id,
-data_event_time,
-data_labels,
-data_extended_sku_grouping,
+data_invoice_billing_period as invoice_billing_period,
+data_invoice_account_primary_id as invoice_account_primary_id,
+data_invoice_stream_type as invoice_stream_type,
+data_invoice_period_status as invoice_period_status,
+data_sku_platform_id as sku_platform_id,
+SAFE_CAST(data_event_time as timestamp) as event_time,
+data_labels as labels,
+data_extended_sku_grouping as extended_sku_grouping,
 etl_update
-from etl_cpro.etl_twilio_billing_events
-${ when(incremental(), `WHERE etl_update >= '${prevDay}'`, `WHERE etl_update>='2023-06-01'`) }
+from latest
 
 
 
