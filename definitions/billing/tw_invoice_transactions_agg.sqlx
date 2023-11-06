@@ -2,9 +2,9 @@ config {
     type: 'incremental',
     schema: 'billing',
     tags: ['twilio','invoice'],
-    uniqueKey: ["source_platform_code","invoice_billing_period","invoice_account_primary_id","sku_primary_id","owner_account_primary_id","transaction_direction","sku_key","sku_value","event_date","invoice_stream_type"],
+    uniqueKey: ["source_platform_code","invoice_billing_period","invoice_account_primary_id","sku_primary_id","owner_account_primary_id","transaction_direction","sku_key","sku_value","event_time","invoice_stream_type"],
     bigquery:{
-      partitionBy:"DATE_TRUNC(event_date, MONTH)",
+      partitionBy:"DATE_TRUNC(event_time, MONTH)",
       clusterBy:["source_platform_code","invoice_billing_period","invoice_account_primary_id","sku_primary_id"]
     }
 }
@@ -22,7 +22,7 @@ with grouped_eom as
   select 
     t.source_platform_code, 
     t.invoice_billing_period,
-    DATE_TRUNC(t.event_time,DAY) as event_date,
+    DATE_TRUNC(t.event_time,HOUR) as event_time,
     t.invoice_account_primary_id,
     t.sku_primary_id,
     t.owner_account_primary_id,
@@ -37,7 +37,7 @@ with grouped_eom as
   group by 
     t.source_platform_code, 
     t.invoice_billing_period,
-    event_date,
+    DATE_TRUNC(t.event_time,HOUR),
     t.invoice_account_primary_id,
     t.sku_primary_id,
     t.owner_account_primary_id,
@@ -50,7 +50,7 @@ grouped_jit as
   select 
     t.source_platform_code, 
     t.invoice_billing_period,
-    DATE_TRUNC(t.event_time,DAY) as event_date,
+    DATE_TRUNC(t.event_time,HOUR) as event_time,
     t.invoice_account_primary_id,
     t.sku_primary_id,
     t.owner_account_primary_id,
@@ -65,7 +65,7 @@ grouped_jit as
   group by 
     t.source_platform_code, 
     t.invoice_billing_period,
-    event_date,
+    DATE_TRUNC(t.event_time,HOUR),
     t.invoice_account_primary_id,
     t.sku_primary_id,
     t.owner_account_primary_id,
