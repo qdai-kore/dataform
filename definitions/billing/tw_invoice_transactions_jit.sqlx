@@ -2,6 +2,7 @@ config {
     type: 'incremental',
     schema: 'billing',
     tags: ['twilio','invoice'],
+    uniqueKey: ["source_platform_code","invoice_billing_period","invoice_account_primary_id","sku_primary_id","transaction_id"],
     bigquery:{
       partitionBy:"DATE_TRUNC(event_time, MONTH)",
       clusterBy:["source_platform_code","invoice_billing_period","invoice_account_primary_id","sku_primary_id"]
@@ -23,7 +24,7 @@ with latest as
   group by 
     t.data_source_platform_code, 
     t.data_invoice_billing_period,
-    DATE_TRUNC(CAST(t.data_event_time as timestamp),DAY),
+    DATE_TRUNC(SAFE_CAST(t.data_event_time as timestamp),DAY),
     t.data_invoice_account_primary_id,
     t.data_sku_primary_id,
     t.data_owner_account_primary_id,
@@ -49,7 +50,7 @@ select
   data_unit_of_measure as unit_of_measure,
   data_sku_primary_id as sku_primary_id,
   data_sku_platform_id as sku_platform_id,
-  CAST(data_event_time as timestamp) as event_time,
+  SAFE_CAST(data_event_time as timestamp) as event_time,
   data_rate as rate,
   data_rate_type as rate_type,
   data_currency as currency,
