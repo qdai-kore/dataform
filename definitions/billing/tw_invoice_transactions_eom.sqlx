@@ -13,8 +13,7 @@ config {
 
 js {
   const last_n_min = dataform.projectConfig.vars.incremental_min;
-  // schedule every 30 min to get last 45 min of data, giving 15 min for edge data
-  const prevRunTime = constants.getPreviousMin(last_n_min);
+
 
 }
 
@@ -24,7 +23,7 @@ with latest as
   select array_agg(t order by etl_update desc limit 1)[offset(0)].*
   from etl_cpro.etl_twilio_billing_invoice_transactions_eom t
     LEFT JOIN UNNEST(t.data_extended_sku_grouping) sku_key_values
-    ${ when(incremental(), `WHERE etl_update >= '${prevRunTime}'`, `WHERE etl_update>='2023-10-01'`) }
+    ${ when(incremental(), `WHERE etl_update >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${last_n_min} MINUTE)`, `WHERE etl_update>='2023-10-01'`) }
   group by 
     t.data_source_platform_code, 
     t.data_invoice_billing_period,
