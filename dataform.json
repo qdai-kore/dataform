@@ -5,7 +5,7 @@
   "defaultDatabase": "machine-learning-poc-385716",
   "defaultLocation": "US",
   "vars":{
-    "incremental_min" : "45",
+    "incremental_min" : "60",
     "incremental_days": "1",
     "incremental_months": "1",
     "sub_no_usage_last_activation_days": "30",
