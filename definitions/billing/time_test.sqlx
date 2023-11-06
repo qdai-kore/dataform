@@ -1,0 +1,15 @@
+config { 
+    type: 'view',
+    schema: 'billing',
+    tags: ['twilio']
+}
+
+js {
+  const last_n_min = dataform.projectConfig.vars.incremental_min;
+  // schedule every 30 min to get last 45 min of data, giving 15 min for edge data
+  const prevRunTime = constants.getPreviousMin(last_n_min);
+
+}
+
+
+select '${prevRunTime}' as prevRunTime
