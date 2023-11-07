@@ -6,7 +6,7 @@
   "defaultLocation": "US",
   "vars":{
     "incremental_min" : "60",
-    "incremental_days": "1",
+    "incremental_hour": "25",
     "incremental_months": "1",
     "sub_no_usage_last_activation_days": "30",
     "sub_no_usage_last_n_periods": "6"
