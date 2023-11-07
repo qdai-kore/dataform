@@ -10,9 +10,7 @@ config {
 }
 
 js {
-  const last_n_days = dataform.projectConfig.vars.incremental_days;
-  // Get start of previous day
-  const prevDay = constants.getStartOfPreviousDay(last_n_days);
+  const incremental_hour = dataform.projectConfig.vars.incremental_hour;
 }
 
 
@@ -32,7 +30,7 @@ with grouped_eom as
     sum(data_quantity) as total_quantity
   from ${ref("billing","tw_invoice_transactions_eom")} t
     LEFT JOIN UNNEST(t.extended_sku_grouping) sku_key_values
-    ${ when(incremental(), `WHERE etl_update >= '${prevDay}'`, `WHERE etl_update>='2023-10-01'`) }
+     ${ when(incremental(), `WHERE etl_update >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${incremental_hour} HOUR)`, `WHERE etl_update>='2023-10-01'`) }
   group by 
     t.source_platform_code, 
     t.invoice_billing_period,
@@ -60,7 +58,7 @@ grouped_jit as
     sum(data_quantity) as total_quantity
   from ${ref("billing","tw_invoice_transactions_jit")} t
     LEFT JOIN UNNEST(t.extended_sku_grouping) sku_key_values
-    ${ when(incremental(), `WHERE etl_update >= '${prevDay}'`, `WHERE etl_update>='2023-10-01'`) }
+     ${ when(incremental(), `WHERE etl_update >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${incremental_hour} HOUR)`, `WHERE etl_update>='2023-10-01'`) }
   group by 
     t.source_platform_code, 
     t.invoice_billing_period,

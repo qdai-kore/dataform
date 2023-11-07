@@ -8,10 +8,7 @@ config {
 }
 
 js {
-  const last_n_days = dataform.projectConfig.vars.incremental_days + 1;
-  // Get start of previous day
-  const prevDay = constants.getStartOfPreviousDay(last_n_days);
-
+  const incremental_hour = dataform.projectConfig.vars.incremental_hour;
 }
 
 -- after run, delete any sims are removed
@@ -19,11 +16,11 @@ post_operations {
   	delete from ${self()} where subscription_id in (
 	    select subscription_id  
       from etl_cpro.etl_inv_subscription 
-      where  etl_update >'${prevDay}' and etl_action ='Delete'
+      where  etl_update >TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${incremental_hour} HOUR) and etl_action ='Delete'
 	)
 }
 
 select array_agg(t order by etl_update desc limit 1)[offset(0)].*
 from etl_cpro.etl_inv_subscription t
-${ when(incremental(), `WHERE etl_update >= '${prevDay}'`, `WHERE etl_update>='2023-06-01'`) }
+${ when(incremental(), `WHERE etl_update >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${incremental_hour} HOUR)`, `WHERE etl_update>='2023-06-01'`) }
 group by t.subscription_urn

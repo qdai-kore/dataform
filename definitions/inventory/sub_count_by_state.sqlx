@@ -5,10 +5,7 @@ config {
 }
 
 js {
-  const last_n_days = dataform.projectConfig.vars.incremental_days + 1;
-  // Get start of previous day
-  const prevDay = constants.getStartOfPreviousDay(last_n_days);
-
+  const incremental_hour = dataform.projectConfig.vars.incremental_hour;
 }
 
 
