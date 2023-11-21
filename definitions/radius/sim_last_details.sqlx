@@ -1,5 +1,6 @@
 config {
     type: "incremental",
+	tags: ["radius_usage"],
     uniqueKey: ["calling_station_id"],
     schema: 'radius',
     bigquery: {
