@@ -1,0 +1,56 @@
+config {
+    type: "view",
+	tags: ["radius_usage"],
+    schema: 'radius'
+}
+
+js {
+  const incremental_day = dataform.projectConfig.vars.incremental_day;
+}
+
+with formatted as 
+(
+	select	JSON_EXTRACT_SCALAR(radius_raw,'$.CALLING-STATION-ID') calling_station_id,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.CALLED-STATION-ID') called_station_id,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.ACCT-SESSION-ID') acct_session_id,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.ACCT-STATUS-TYPE') acct_status_type,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.ACCT-TERMINATE-CAUSE') acct_terminate_cause,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.FRAMED-IP-ADDRESS') framed_ip_address,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.NAS-IP-ADDRESS') nas_ip_address,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.USER-NAME') user_name,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.ACCT-OUTPUT-OCTETS') acct_output_octets,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.ACCT-OUTPUT-PACKETS') acct_output_packets,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.ACCT-INPUT-OCTETS') acct_input_octets,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.ACCT-INPUT-PACKETS') acct_input_packets,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.3GPP-USER-LOCATION-INFO') user_location_info,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.3GPP-RAT-TYPE') rat_type,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.FREERADIUS-CLIENT-IP-ADDRESS') freeradius_client_ip_address,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.NAS-IDENTIFIER') nas_identifier,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.host.name') destination_host,
+    JSON_EXTRACT_SCALAR(des_general_decode,'$.3GPP-IMEISV.IMEI') imei,
+	JSON_EXTRACT_SCALAR(des_sim_info,'$.PlatformID') platform_id,
+    JSON_EXTRACT_SCALAR(des_sim_info,'$.Subscription.OrgURN') org_urn,
+	JSON_EXTRACT_SCALAR(des_sim_info,'$.Subscription.SubscriptionURN') subscription_urn,
+	JSON_EXTRACT_SCALAR(des_sim_info,'$.ICCID') iccid,
+	JSON_EXTRACT_SCALAR(des_sim_info,'$.IMSI') imsi,
+    PARSE_TIMESTAMP("%b %e %Y %k:%M:%S UTC",JSON_EXTRACT_SCALAR(radius_raw,'$.EVENT-TIMESTAMP')) event_timestamp,
+    etl_update,
+	
+	from etl_cpro.etl_radius_acct_rich
+)
+, enriched as(
+	select *,
+	case when acct_status_type = 'Stop' then 'NotConnected' else 'Connected' end connection
+	from formatted
+)
+, all_data as
+(
+	select * from enriched
+	WHERE etl_update >= TIMESTAMP_TRUNC(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${incremental_day} DAY), DAY)
+	union all
+	select * from radius.sim_last_details
+)
+select array_agg(t order by etl_update desc limit 1)[offset(0)].*
+from all_data t
+group by t.calling_station_id
+
