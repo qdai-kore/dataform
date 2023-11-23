@@ -26,6 +26,10 @@ with formatted as
 	JSON_EXTRACT_SCALAR(radius_raw,'$.3GPP-RAT-TYPE') rat_type,
 	JSON_EXTRACT_SCALAR(radius_raw,'$.FREERADIUS-CLIENT-IP-ADDRESS') freeradius_client_ip_address,
 	JSON_EXTRACT_SCALAR(radius_raw,'$.NAS-IDENTIFIER') nas_identifier,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.3GPP-GGSN-MCC-MNC') ggsn_mmc_mnc,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.3GPP-IMSI-MCC-MNC') imsi_mcc_mnc,
+	JSON_EXTRACT_SCALAR(radius_raw,'$.3GPP-SGSN-MCC-MNC') sgsn_mcc_mnc,
+
 	JSON_EXTRACT_SCALAR(radius_raw,'$.host.name') destination_host,
     JSON_EXTRACT_SCALAR(des_general_decode,'$.3GPP-IMEISV.IMEI') imei,
 	JSON_EXTRACT_SCALAR(des_sim_info,'$.PlatformID') platform_id,
@@ -45,10 +49,70 @@ with formatted as
 )
 , all_data as
 (
-	select * from enriched
+	select  
+	calling_station_id,
+	called_station_id,
+	acct_session_id,
+	acct_status_type,
+	acct_terminate_cause,
+	framed_ip_address,
+	nas_ip_address,
+	user_name,
+	acct_output_octets,
+	acct_output_packets,
+	acct_input_octets,
+	acct_input_packets,
+	user_location_info,
+	rat_type,
+	freeradius_client_ip_address,
+	nas_identifier,
+	ggsn_mmc_mnc,
+	imsi_mcc_mnc,
+	sgsn_mcc_mnc,
+	destination_host,
+	imei,
+	platform_id,
+	org_urn,
+	subscription_urn,
+	iccid,
+	imsi,
+	event_timestamp,
+	etl_update,
+	connection
+	from enriched
 	WHERE etl_update >= TIMESTAMP_TRUNC(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${incremental_day} DAY), DAY)
 	union all
-	select * from radius.sim_last_details
+	select  
+	calling_station_id,
+	called_station_id,
+	acct_session_id,
+	acct_status_type,
+	acct_terminate_cause,
+	framed_ip_address,
+	nas_ip_address,
+	user_name,
+	acct_output_octets,
+	acct_output_packets,
+	acct_input_octets,
+	acct_input_packets,
+	user_location_info,
+	rat_type,
+	freeradius_client_ip_address,
+	nas_identifier,
+	ggsn_mmc_mnc,
+	imsi_mcc_mnc,
+	sgsn_mcc_mnc,
+	destination_host,
+	imei,
+	platform_id,
+	org_urn,
+	subscription_urn,
+	iccid,
+	imsi,
+	event_timestamp,
+	etl_update,
+	connection
+	from ${ref('radius','sim_last_details')}
 )
 select array_agg(t order by etl_update desc limit 1)[offset(0)].*
 from all_data t
