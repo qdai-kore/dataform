@@ -22,7 +22,7 @@ WITH final AS (
             c.account_owner_title
            FROM `org.sf_child_account` c
              JOIN `org.sf_parent_account` p ON  c.parent_account = p.id_18
-             JOIN `org.etl_organization` org ON  concat('Cpro_',cast(org.org_id as string)) = c.cpro_id 
+             JOIN ${ref('org','stg_organization')} org ON  concat('Cpro_',cast(org.org_id as string)) = c.cpro_id 
             where org.status = 'Active' and c.account_status is not null
         )
  SELECT *
