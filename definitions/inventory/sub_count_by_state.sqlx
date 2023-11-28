@@ -4,11 +4,6 @@ config {
     schema: 'inventory'
 }
 
-js {
-  const incremental_hour = dataform.projectConfig.vars.incremental_hour;
-}
-
-
 
 select org_urn, 
 service_type_id, 

@@ -10,7 +10,7 @@ config {
 }
 
 js {
-  const incremental_hour = dataform.projectConfig.vars.incremental_hour;
+  const incremental_day = dataform.projectConfig.vars.incremental_day;
 }
 
 with latest as 
@@ -18,7 +18,7 @@ with latest as
   select array_agg(t order by etl_update desc limit 1)[offset(0)].*
   from etl_cpro.etl_twilio_billing_events t
     LEFT JOIN UNNEST(t.data_extended_sku_grouping) sku_key_values
-    ${ when(incremental(), `WHERE etl_update >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${incremental_hour} HOUR)`, `WHERE etl_update>='2023-10-01'`) }
+    ${ when(incremental(), `WHERE etl_update >= TIMESTAMP_TRUNC(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${incremental_day} DAY),DAY)`, `WHERE etl_update>='2023-10-01'`) }
   group by 
     t.data_source_platform_code, 
     t.data_invoice_billing_period,
