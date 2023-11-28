@@ -9,14 +9,14 @@ config {
 }
 
 js {
-  const incremental_hour = dataform.projectConfig.vars.incremental_hour;
+  const incremental_day = dataform.projectConfig.vars.incremental_day;
 }
 
 with group_msisdn as 
 (
 	select array_agg(t order by PARSE_TIMESTAMP("%b %e %Y %k:%M:%S UTC",JSON_EXTRACT_SCALAR(radius_raw,'$.EVENT-TIMESTAMP')) desc limit 1)[offset(0)].*
 	from etl_cpro.etl_radius_acct_rich t 
-	${ when(incremental(), `WHERE etl_update >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${incremental_hour} HOUR)`, `WHERE etl_update>='2023-10-01'`) }
+	${ when(incremental(), `WHERE etl_update >= TIMESTAMP_TRUNC(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${incremental_day} DAY),DAY)`, `WHERE etl_update>='2023-10-01'`) }
 	and JSON_EXTRACT_SCALAR(radius_raw,'$.CALLING-STATION-ID') is not null
 	group by JSON_EXTRACT_SCALAR(radius_raw,'$.CALLING-STATION-ID')
 )

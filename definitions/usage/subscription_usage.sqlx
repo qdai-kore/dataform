@@ -9,14 +9,14 @@ config {
 }
 
 js {
-  const incremental_hour = dataform.projectConfig.vars.incremental_hour;
+  const incremental_day = dataform.projectConfig.vars.incremental_day;
 }
 
 with latest_usage as 
 (
   select array_agg(t order by etl_update desc limit 1)[offset(0)].*
   from etl_cpro.etl_subscription_usage t
-    ${ when(incremental(), `WHERE etl_update >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${incremental_hour} HOUR)`, `WHERE etl_update>='2023-06-01'`) }
+    ${ when(incremental(), `WHERE etl_update >= TIMESTAMP_TRUNC(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${incremental_day} DAY),DAY)`, `WHERE etl_update>='2023-10-01'`) }
   group by t.org_urn, t.subscription_urn, t.usage_type_id, t.period_id, DATE(t.usage_date)
 )
 
