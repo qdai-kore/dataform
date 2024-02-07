@@ -1,0 +1,78 @@
+config {
+    type: "view",
+    schema: 'revenue',
+    tags: ['revenue'],
+    description: "opportunity account with tcv calculated in USD ",
+    bigquery: {
+        labels: {
+            "data_medallion": "silver",
+            "data_level": "POC",
+            "manually_uploaded": "true"
+        }
+    }
+}
+
+js {
+    const tcv_db = "revenue.raw_sf_device_schedule_data";
+    const currency_db = "revenue.raw_sf_currency_conversion";
+    const child_account_db = "etl_boomi.etl_sf_child_account";
+}
+
+SELECT
+  -- d.*,
+  d.account_id,
+  d.opportunity_id,
+  d.opportunity_parent_account,
+  d.opportunity_account_name,
+  d.opportunity_name,
+  d.opportunity_account_owner_name,
+  d.opportunity_account_owner_title,
+  d.opportunity_close_date,
+  d.opportunity_month_number,
+  d.month,
+  d.rolling_revenue_currency,
+  d.rolling_revenue,
+  COALESCE(SUM(d.rolling_revenue * c.conversion_rate),0) AS rolling_revenue_usd,
+  d.calaculated_tcv_currency,
+  d.calculated_tcv,
+  COALESCE(SUM(d.calculated_tcv * c.conversion_rate),0) AS calculated_tcv_usd,
+  d.opty_type,
+  d.product_family,
+  d.kore_product_family,
+  d.opportunity_kore_industry,
+  d.last_modified_date,
+  d.external_id,
+  d.opportunity_stage
+FROM
+  `${tcv_db}` d
+LEFT JOIN
+  `${currency_db}` c
+ON
+  d.calaculated_tcv_currency = c.iso_code
+  AND d.rolling_revenue_currency = c.iso_code
+WHERE
+  ((d.opportunity_stage) = 'Closed Won'
+    AND (d.opty_type) = 'New Customer'
+    AND (d.account_id) = '0011P00001DJY7gQAH' )
+
+group by d.account_id,
+d.opportunity_id,
+d.opportunity_parent_account,
+d.opportunity_account_name,
+d.opportunity_name,
+d.opportunity_account_owner_name,
+d.opportunity_account_owner_title,
+d.opportunity_close_date,
+d.opportunity_month_number,
+d.month,
+d.rolling_revenue_currency,
+d.rolling_revenue,
+d.calaculated_tcv_currency,
+d.calculated_tcv,
+d.opty_type,
+d.product_family,
+d.kore_product_family,
+d.opportunity_kore_industry,
+d.last_modified_date,
+d.external_id,
+d.opportunity_stage
